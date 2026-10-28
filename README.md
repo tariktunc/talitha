@@ -41,6 +41,8 @@ Ad, Büyük Ayı'daki Talitha yıldızından gelir ("ceylanın üçüncü sıçr
 | `icons/` | Logo (`icon.svg` ve PNG boyutları) |
 | `test/logic.test.js` | Karar mantığı testleri |
 | `test/locales.test.js` | Dil paketi testleri |
+| `test/popup.test.js` | Pencere altındaki blakfy.com bağlantısı testi |
+| `e2e/extension.e2e.js` | Gerçek Chromium'da uçtan uca testler |
 
 Yeni dil eklemek için `_locales/en/messages.json` dosyasını `_locales/<dil-kodu>/messages.json` olarak kopyalayıp metinleri çevirin.
 
@@ -52,7 +54,8 @@ Node.js 18 veya üstü gerekir, ek paket gerekmez.
 node --test
 ```
 
-21 test vardır. Kapsamları:
+22 test vardır. Kapsamları:
+- Pencerenin altındaki "operated by Blakfy Studio" yazısı, güvenli şekilde yeni sekmede `https://blakfy.com` adresini açan bir bağlantı.
 - Dil paketleri: her dilde aynı anahtarlar var, boş metin yok, manifest ve pencerede kullanılan her anahtarın karşılığı var, Chrome Web Store uzunluk sınırları aşılmıyor.
 - Aktif videoyu seçme.
 - Bitişi yakalama (bitmeden önce, `ended`, başa sarma).
@@ -60,7 +63,23 @@ node --test
 - Geçişler arası bekleme süresi.
 - Gerçek sayfada ölçülen döngü davranışının tekrar oynatılması (250 ms ve arka plan sekmesindeki 1 sn'lik zamanlayıcıyla).
 
-Testler karar mantığını sınar. Chrome içinde eklentinin sayfaya yüklenmesini ve düğmeye tıklamasını sınamaz.
+### Uçtan uca test (gerçek tarayıcıda)
+
+Eklentiyi gerçek bir Chromium'a yükleyip sürer. Playwright'ın Chromium'u ve internet gerekir.
+
+```
+npm install
+npx playwright-core install chromium
+npm run test:e2e
+```
+
+8 test vardır:
+- Pencerenin altındaki "operated by Blakfy Studio" bağlantısına tıklayınca blakfy.com yeni sekmede açılıyor.
+- Ad ve açıklama İngilizce ve Türkçe dil paketinden geliyor.
+- Pencerede düğme açıp kapatınca depolama ve `ON` / `OFF` rozeti değişiyor, durum pencere kapanıp açılınca korunuyor.
+- Gerçek YouTube Shorts'ta açıkken video bitince bir sonrakine geçiyor, kapalıyken geçmiyor.
+
+YouTube testleri internete bağlıdır. Shorts yüklenmezse test geçmiş sayılmaz, atlandı olarak raporlanır. Normal `npm test` yalnızca hızlı birim testlerini çalıştırır.
 
 ## Bilinen sınırlar
 

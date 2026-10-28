@@ -1,0 +1,13 @@
+{
+  "name": "talitha",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Talitha – Auto Shorts: YouTube Shorts auto scroll Chrome extension",
+  "scripts": {
+    "test": "node --test",
+    "test:e2e": "node --test e2e/extension.e2e.js"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.1"
+  }
+}
