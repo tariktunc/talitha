@@ -14,7 +14,7 @@ async function launch(locale) {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "talitha-e2e-"));
   const context = await chromium.launchPersistentContext(userDataDir, {
     channel: "chromium", // new headless mode, the only headless mode that runs extensions
-    headless: true,
+    headless: process.env.E2E_HEADED !== "1", // E2E_HEADED=1 shows the window; background tabs only report "hidden" there
     locale,
     args: [
       `--lang=${locale}`, // browser UI language, which chrome.i18n follows (the locale option only affects pages)
@@ -44,7 +44,16 @@ async function until(read, expected, ms = 5000) {
   return last;
 }
 
-const badge = (sw) => sw.evaluate(() => chrome.action.getBadgeText({}));
+// Badge of whichever tab is active (call page.bringToFront() first)
+const activeBadge = (sw) =>
+  sw.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    return {
+      text: await chrome.action.getBadgeText({ tabId: tab.id }),
+      color: await chrome.action.getBadgeBackgroundColor({ tabId: tab.id }),
+    };
+  });
+const activeBadgeText = async (sw) => (await activeBadge(sw)).text;
 const stored = (sw) => sw.evaluate(() => chrome.storage.local.get("enabled").then((r) => r.enabled));
 
 describe("popup, badge and storage (English)", () => {
@@ -58,9 +67,8 @@ describe("popup, badge and storage (English)", () => {
     assert.match(m.description, /next YouTube Short/);
   });
 
-  test("freshly installed: enabled and badge ON", async () => {
+  test("freshly installed: enabled", async () => {
     assert.equal(await until(() => stored(ext.sw), true), true);
-    assert.equal(await until(() => badge(ext.sw), "ON"), "ON");
   });
 
   test("popup shows the footer and the English texts", async () => {
@@ -89,14 +97,13 @@ describe("popup, badge and storage (English)", () => {
     await page.close();
   });
 
-  test("popup switch turns it off and on; storage and badge follow", async () => {
+  test("popup switch turns it off and on; storage follows and survives reopening", async () => {
     const page = await ext.context.newPage();
     await page.goto(`chrome-extension://${ext.id}/popup.html`);
 
     await page.click(".track");
     assert.equal(await page.textContent("#state-text"), "Off");
     assert.equal(await until(() => stored(ext.sw), false), false);
-    assert.equal(await until(() => badge(ext.sw), "OFF"), "OFF");
 
     // state survives closing and reopening the popup
     await page.close();
@@ -108,7 +115,6 @@ describe("popup, badge and storage (English)", () => {
     await again.click(".track");
     assert.equal(await again.textContent("#state-text"), "On");
     assert.equal(await until(() => stored(ext.sw), true), true);
-    assert.equal(await until(() => badge(ext.sw), "ON"), "ON");
     await again.close();
   });
 });
@@ -130,6 +136,70 @@ describe("popup (Turkish)", () => {
     const m = await ext.sw.evaluate(() => chrome.runtime.getManifest());
     assert.equal(m.name, "Talitha – Auto Shorts");
     assert.match(m.description, /bir sonrakine geçer/);
+  });
+});
+
+describe("badge follows the active tab", () => {
+  let ext;
+  before(async () => { ext = await launch("en-US"); });
+  after(async () => { await ext.close(); });
+
+  // A www.youtube.com page served from a stub, so these tests need no network
+  async function youtubeStub() {
+    const page = await ext.context.newPage();
+    await page.route("https://www.youtube.com/**", (route) =>
+      route.fulfill({ contentType: "text/html", body: "<html><body>stub</body></html>" })
+    );
+    await page.goto("https://www.youtube.com/feed/stub");
+    return page;
+  }
+  const setEnabled = (value) =>
+    ext.sw.evaluate((v) => chrome.storage.local.set({ enabled: v }), value);
+
+  test("a non-YouTube tab shows a grey OFF", async () => {
+    const page = await ext.context.newPage();
+    await page.goto("about:blank");
+    await page.bringToFront();
+    assert.equal(await until(() => activeBadgeText(ext.sw), "OFF"), "OFF");
+    assert.deepEqual((await activeBadge(ext.sw)).color, [136, 136, 136, 255]);
+    await page.close();
+  });
+
+  test("a YouTube tab shows a green ON and follows the popup switch", async () => {
+    const page = await youtubeStub();
+    await page.bringToFront();
+    assert.equal(await until(() => activeBadgeText(ext.sw), "ON"), "ON");
+    assert.deepEqual((await activeBadge(ext.sw)).color, [26, 156, 60, 255]);
+
+    await setEnabled(false);
+    assert.equal(await until(() => activeBadgeText(ext.sw), "OFF"), "OFF");
+    await setEnabled(true);
+    assert.equal(await until(() => activeBadgeText(ext.sw), "ON"), "ON");
+    await page.close();
+  });
+
+  test("switching between a YouTube tab and another tab flips the badge", async () => {
+    const yt = await youtubeStub();
+    const other = await ext.context.newPage();
+    await other.goto("about:blank");
+
+    await other.bringToFront();
+    assert.equal(await until(() => activeBadgeText(ext.sw), "OFF"), "OFF");
+    await yt.bringToFront();
+    assert.equal(await until(() => activeBadgeText(ext.sw), "ON"), "ON");
+    await other.bringToFront();
+    assert.equal(await until(() => activeBadgeText(ext.sw), "OFF"), "OFF");
+    await yt.close();
+    await other.close();
+  });
+
+  test("a YouTube tab that navigates away drops back to OFF", async () => {
+    const page = await youtubeStub();
+    await page.bringToFront();
+    assert.equal(await until(() => activeBadgeText(ext.sw), "ON"), "ON");
+    await page.goto("about:blank");
+    assert.equal(await until(() => activeBadgeText(ext.sw), "OFF"), "OFF");
+    await page.close();
   });
 });
 
@@ -172,6 +242,31 @@ describe("content script on real YouTube Shorts", () => {
     await seekNearEnd(page);
     await page.waitForFunction((s) => location.pathname !== s, start, { timeout: 10000 });
     assert.match(new URL(page.url()).pathname, /^\/shorts\//);
+    await page.close();
+  });
+
+  test("background tab: does not advance while another tab is in front", { timeout: 90000 }, async (t) => {
+    const page = await openShort(t);
+    if (!page) return;
+    // Playwright fakes focus for every page; switch that off so visibility is real
+    const cdp = await ext.context.newCDPSession(page);
+    await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+    const other = await ext.context.newPage();
+    await other.goto("about:blank");
+    await other.bringToFront();
+    await new Promise((r) => setTimeout(r, 500));
+    const state = await page.evaluate(() => document.visibilityState);
+    if (state !== "hidden") {
+      await other.close();
+      await page.close();
+      t.skip(`Shorts tab is "${state}", not hidden, in this browser`);
+      return;
+    }
+    const start = new URL(page.url()).pathname;
+    await seekNearEnd(page);
+    await new Promise((r) => setTimeout(r, 5000));
+    assert.equal(new URL(page.url()).pathname, start);
+    await other.close();
     await page.close();
   });
 

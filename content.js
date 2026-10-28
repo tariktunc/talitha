@@ -42,6 +42,7 @@ setInterval(() => {
     duration: v.duration,
     ended: v.ended,
     src: v.currentSrc,
+    visible: document.visibilityState === "visible",
   };
   if (TalithaLogic.tick(state, snapshot, Date.now())) goNext();
 }, 250);

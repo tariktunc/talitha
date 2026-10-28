@@ -77,6 +77,47 @@ test("tick: a new video resets lastTime, so no false wrap on the new src", () =>
   assert.equal(L.tick(s, vid({ src: "b", currentTime: 0.1 }), 0), false);
 });
 
+test("tick: background tab never advances, even at the very end", () => {
+  const s = L.newState();
+  assert.equal(L.tick(s, vid({ duration: 124.521, currentTime: 124.4, visible: false }), 0), false);
+  assert.equal(L.tick(s, vid({ ended: true, visible: false }), 5000), false);
+});
+
+test("tick: coming back to a looped video is no false wrap", () => {
+  const s = L.newState();
+  // hidden while the video ends and loops to the middle
+  L.tick(s, vid({ duration: 30, currentTime: 29.9, visible: false }), 0);
+  L.tick(s, vid({ duration: 30, currentTime: 14, visible: false }), 1000);
+  // visible again, still mid-video
+  assert.equal(L.tick(s, vid({ duration: 30, currentTime: 15, visible: true }), 2000), false);
+});
+
+test("tick: visible tab behaves as before (visible true or missing)", () => {
+  const end = { duration: 124.521, currentTime: 124.3 };
+  assert.equal(L.tick(L.newState(), vid({ ...end, visible: true }), 0), true);
+  assert.equal(L.tick(L.newState(), vid(end), 0), true);
+});
+
+test("badgeFor: green ON only on youtube.com while enabled", () => {
+  assert.deepEqual(L.badgeFor(true, "https://www.youtube.com/shorts/abc"), { text: "ON", color: "#1a9c3c" });
+  assert.deepEqual(L.badgeFor(true, "https://www.youtube.com/"), { text: "ON", color: "#1a9c3c" });
+});
+
+test("badgeFor: grey OFF when switched off, on other sites, or url unknown", () => {
+  const off = { text: "OFF", color: "#888888" };
+  assert.deepEqual(L.badgeFor(false, "https://www.youtube.com/shorts/abc"), off);
+  assert.deepEqual(L.badgeFor(true, "https://example.com/"), off);
+  assert.deepEqual(L.badgeFor(true, undefined), off);
+  assert.deepEqual(L.badgeFor(true, ""), off);
+});
+
+test("isYouTube: look-alike and non-https hosts do not count", () => {
+  assert.equal(L.isYouTube("https://www.youtube.com.evil.com/"), false);
+  assert.equal(L.isYouTube("http://www.youtube.com/"), false);
+  assert.equal(L.isYouTube("https://m.youtube.com/"), false);
+  assert.equal(L.isYouTube("https://www.youtube.com/watch?v=1"), true);
+});
+
 // Replays a playing, looping video (the shape measured on the live page):
 // plays to `duration`, wraps to 0 with no "ended" event, keeps going.
 // Polls every `pollMs` from `phase` ms; returns the video time of the first advance.

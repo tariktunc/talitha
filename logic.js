@@ -18,8 +18,19 @@ const TalithaLogic = {
     );
   },
 
+  // The content script only runs on www.youtube.com, so that is the only host that counts.
+  isYouTube(url) {
+    return typeof url === "string" && url.startsWith("https://www.youtube.com/");
+  },
+
+  // Toolbar badge for one tab: green ON only on YouTube while enabled, otherwise grey OFF.
+  badgeFor(enabled, url) {
+    const on = enabled && this.isYouTube(url);
+    return { text: on ? "ON" : "OFF", color: on ? "#1a9c3c" : "#888888" };
+  },
+
   // One poll tick. Returns true when the page should advance to the next Short.
-  // v = { currentTime, duration, ended, src }
+  // v = { currentTime, duration, ended, src, visible }  (visible: false = background tab)
   tick(state, v, now) {
     if (!isFinite(v.duration) || v.duration === 0) return false;
 
@@ -34,6 +45,9 @@ const TalithaLogic = {
     const wrapped =
       state.lastTime > v.duration - this.WRAP_WINDOW_SECONDS && v.currentTime < state.lastTime - 1;
     state.lastTime = v.currentTime;
+
+    // Background tab: keep tracking the time (so coming back is no false wrap), never advance
+    if (v.visible === false) return false;
 
     if (!(nearEnd || v.ended || wrapped)) return false;
     if (now - state.advancedAt < this.DEBOUNCE_MS) return false;
