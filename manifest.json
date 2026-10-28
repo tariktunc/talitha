@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Talitha – YouTube Shorts Otomatik Kaydırıcı",
+  "version": "1.0.0",
+  "description": "YouTube Shorts videosu bitince otomatik olarak bir sonrakine geçer.",
+  "permissions": ["storage"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "Talitha – Otomatik Kaydırıcı",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["logic.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
