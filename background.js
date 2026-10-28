@@ -14,8 +14,7 @@ chrome.runtime.onStartup.addListener(async () => {
   paintBadge(enabled);
 });
 
-chrome.action.onClicked.addListener(async () => {
-  const { enabled = true } = await chrome.storage.local.get("enabled");
-  await chrome.storage.local.set({ enabled: !enabled });
-  paintBadge(!enabled);
+// The popup switch writes "enabled"; the badge follows the stored value
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.enabled) paintBadge(changes.enabled.newValue);
 });

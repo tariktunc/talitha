@@ -1,0 +1,9 @@
+{
+  "extName": { "message": "Talitha – Auto Shorts" },
+  "extDescription": { "message": "Automatically moves to the next YouTube Short when the current one ends." },
+  "actionTitle": { "message": "Talitha – Auto Shorts" },
+  "popupTitle": { "message": "Talitha Auto Shorts" },
+  "popupSubtitle": { "message": "YouTube Shorts Auto Scroll" },
+  "stateOn": { "message": "On" },
+  "stateOff": { "message": "Off" }
+}

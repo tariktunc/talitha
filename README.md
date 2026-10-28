@@ -1,4 +1,4 @@
-# Talitha – YouTube Shorts Otomatik Kaydırıcı
+# Talitha – Auto Shorts
 
 YouTube Shorts videosu bitince otomatik olarak bir sonrakine geçen basit bir Chrome eklentisi.
 
@@ -7,8 +7,9 @@ Ad, Büyük Ayı'daki Talitha yıldızından gelir ("ceylanın üçüncü sıçr
 ## Özellikler
 
 - Video bitmeden hemen önce "Sonraki video" düğmesine basar.
-- Simgeye tıklayınca açılır/kapanır. Rozet durumu gösterir: `ON` / `OFF`.
+- Simgeye tıklayınca küçük bir pencere açılır, içindeki düğmeyle açılıp kapanır. Simgedeki rozet durumu gösterir: `ON` / `OFF`.
 - Yalnızca `youtube.com/shorts/` adreslerinde çalışır.
+- Dil desteği: İngilizce (varsayılan) ve Türkçe. Chrome'un arayüz diline göre otomatik seçilir.
 - Hiçbir veri toplamaz, hiçbir sunucuya bağlanmaz. Tek izin: `storage` (açık/kapalı durumunu saklamak için).
 
 ## Kurulum
@@ -17,7 +18,7 @@ Ad, Büyük Ayı'daki Talitha yıldızından gelir ("ceylanın üçüncü sıçr
 2. Chrome'da `chrome://extensions` sayfasını açın.
 3. "Geliştirici modu"nu açın.
 4. "Paketlenmemiş öğe yükle"ye tıklayıp proje klasörünü seçin.
-5. Bir Shorts videosu açın. Eklenti açıkken rozet `ON` gösterir.
+5. Bir Shorts videosu açın. Eklenti açıkken rozet `ON` gösterir. Kapatmak için simgeye tıklayıp düğmeyi çevirin.
 
 ## Nasıl çalışır
 
@@ -34,19 +35,25 @@ Ad, Büyük Ayı'daki Talitha yıldızından gelir ("ceylanın üçüncü sıçr
 | `manifest.json` | Eklenti tanımı (Manifest V3) |
 | `logic.js` | Karar mantığı. DOM'a dokunmaz, Node'da test edilir |
 | `content.js` | Sayfayı izler, videoyu bulur, düğmeye tıklar |
-| `background.js` | Simge tıklaması ve `ON` / `OFF` rozeti |
+| `background.js` | `ON` / `OFF` rozeti |
+| `popup.html` / `popup.css` / `popup.js` | Simgeye tıklayınca açılan aç/kapa penceresi |
+| `_locales/en`, `_locales/tr` | Dil paketleri (ad, açıklama, pencere metinleri) |
 | `icons/` | Logo (`icon.svg` ve PNG boyutları) |
-| `test/logic.test.js` | Birim testleri |
+| `test/logic.test.js` | Karar mantığı testleri |
+| `test/locales.test.js` | Dil paketi testleri |
+
+Yeni dil eklemek için `_locales/en/messages.json` dosyasını `_locales/<dil-kodu>/messages.json` olarak kopyalayıp metinleri çevirin.
 
 ## Test
 
 Node.js 18 veya üstü gerekir, ek paket gerekmez.
 
 ```
-node --test test/logic.test.js
+node --test
 ```
 
-15 test vardır. Kapsamları:
+21 test vardır. Kapsamları:
+- Dil paketleri: her dilde aynı anahtarlar var, boş metin yok, manifest ve pencerede kullanılan her anahtarın karşılığı var, Chrome Web Store uzunluk sınırları aşılmıyor.
 - Aktif videoyu seçme.
 - Bitişi yakalama (bitmeden önce, `ended`, başa sarma).
 - Kullanıcı videoyu geri sararsa geçmemesi.

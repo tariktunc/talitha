@@ -1,0 +1,9 @@
+{
+  "extName": { "message": "Talitha – Auto Shorts" },
+  "extDescription": { "message": "YouTube Shorts videosu bitince otomatik olarak bir sonrakine geçer." },
+  "actionTitle": { "message": "Talitha – Auto Shorts" },
+  "popupTitle": { "message": "Talitha Auto Shorts" },
+  "popupSubtitle": { "message": "YouTube Shorts Otomatik Kaydırıcı" },
+  "stateOn": { "message": "Açık" },
+  "stateOff": { "message": "Kapalı" }
+}
