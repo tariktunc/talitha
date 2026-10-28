@@ -8,14 +8,19 @@
       <stop offset="0" stop-color="#ffe9a0"/>
       <stop offset="1" stop-color="#f5a623"/>
     </linearGradient>
+    <clipPath id="clip"><rect width="128" height="128" rx="28"/></clipPath>
   </defs>
   <rect width="128" height="128" rx="28" fill="url(#bg)"/>
-  <circle cx="100" cy="24" r="2.2" fill="#ffffff" opacity="0.7"/>
-  <circle cx="22" cy="104" r="1.8" fill="#ffffff" opacity="0.5"/>
-  <circle cx="108" cy="50" r="1.4" fill="#ffffff" opacity="0.4"/>
-  <circle cx="22" cy="24" r="2.5" fill="#ffd36b" opacity="0.35"/>
-  <circle cx="28" cy="41" r="3.5" fill="#ffd36b" opacity="0.55"/>
-  <circle cx="38" cy="56" r="4.5" fill="#ffd36b" opacity="0.75"/>
-  <circle cx="51" cy="68" r="5.5" fill="#ffd36b" opacity="0.9"/>
-  <path d="M90 56 Q94 82 120 86 Q94 90 90 116 Q86 90 60 86 Q86 82 90 56 Z" fill="url(#gold)"/>
+  <g clip-path="url(#clip)">
+    <!-- next Short, peeking in from below -->
+    <rect x="34" y="98" width="60" height="70" rx="13" fill="#1c2058" stroke="#ffd36b" stroke-opacity="0.55" stroke-width="3"/>
+    <!-- current Short (9:16 card) -->
+    <rect x="34" y="12" width="60" height="78" rx="13" fill="#2b3178" stroke="#ffd36b" stroke-width="3.5"/>
+    <!-- Talitha: the leap trail ending in the star -->
+    <circle cx="48" cy="26" r="1.8" fill="#ffd36b" opacity="0.4"/>
+    <circle cx="52" cy="35" r="2.4" fill="#ffd36b" opacity="0.6"/>
+    <circle cx="57" cy="44" r="3" fill="#ffd36b" opacity="0.8"/>
+    <circle cx="63" cy="52" r="3.6" fill="#ffd36b" opacity="0.95"/>
+    <path d="M76 44 Q79 61 94 64 Q79 67 76 84 Q73 67 58 64 Q73 61 76 44 Z" fill="url(#gold)" transform="translate(-3 -6)"/>
+  </g>
 </svg>
